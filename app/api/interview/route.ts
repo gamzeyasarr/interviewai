@@ -1,28 +1,34 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
+
+
 import { parseJsonFromAssistant } from "@/lib/model-json";
 
 const SYSTEM_BASE =
-"Sen Türkiye'nin en deneyimli mülakat koçusun. " +
-"15 yıldır Trendyol, Getir, Akbank, Arçelik gibi Türk şirketlerinde " +
-"ve Google, Microsoft gibi global şirketlerde işe alım süreçlerini yönettin. " +
-"Adaylara her zaman Türkçe, yapıcı ve somut geri bildirim verirsin. " +
-"Sorularını şirketin kültürüne, büyüklüğüne ve sektörüne göre özelleştirirsin. " +
-"Geri bildirimlerinde her zaman: " +
-"1) Somut güçlü yönler, " +
-"2) Geliştirilmesi gereken spesifik noktalar, " +
-"3) Gerçek bir mülakatı kazandıracak ideal cevap örneği verirsin. " +
-"Tüm çıktıların Türkçe olmalı.";
+  "Sen Türkiye'nin en deneyimli mülakat koçusun. " +
+  "15 yıldır Trendyol, Getir, Akbank, Arçelik gibi Türk şirketlerinde " +
+  "ve Google, Microsoft gibi global şirketlerde işe alım süreçlerini yönettin. " +
+  "Adaylara her zaman Türkçe, yapıcı ve somut geri bildirim verirsin. " +
+  "Sorularını şirketin kültürüne, büyüklüğüne ve sektörüne göre özelleştirirsin. " +
+  "Geri bildirimlerinde her zaman: " +
+  "1) Somut güçlü yönler, " +
+  "2) Geliştirilmesi gereken spesifik noktalar, " +
+  "3) Gerçek bir mülakatı kazandıracak ideal cevap örneği verirsin. " +
+  "Tüm çıktıların Türkçe olmalı.";
 
-  const GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_MODEL = "gemini-2.5-flash";
+
+interface ConversationMessage {
+  role: "user" | "assistant";
+  content: string;
+}
 
 function readTrimmedString(obj: Record<string, unknown>, key: string): string {
   const v = obj[key];
   return typeof v === "string" ? v.trim() : "";
 }
 
-/** Node `process.env` — `process` globaline doğrudan ihtiyaç duymaz (@types/node olmadan da tip kontrolü çalışır). */
 function getGoogleApiKey(): string | undefined {
   return process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 }
@@ -100,6 +106,7 @@ async function generateJsonText(
   genAI: GoogleGenerativeAI,
   userText: string,
   temperature: number,
+  history: ConversationMessage[] = [],
 ): Promise<string> {
   const model = genAI.getGenerativeModel({
     model: GEMINI_MODEL,
@@ -110,7 +117,15 @@ async function generateJsonText(
     },
   });
 
-  const result = await model.generateContent(userText);
+  const contents = [
+    ...history.map((m) => ({
+      role: m.role,
+      parts: [{ text: m.content }],
+    })),
+    { role: "user" as const, parts: [{ text: userText }] },
+  ];
+
+  const result = await model.generateContent({ contents });
   let raw: string;
   try {
     raw = result.response.text();
@@ -155,6 +170,10 @@ export async function POST(request: Request) {
       const position = readTrimmedString(payload, "position");
       const difficulty = readTrimmedString(payload, "difficulty") || "orta";
       const category = readTrimmedString(payload, "category") || "davranışsal";
+      const history = Array.isArray(payload["history"])
+        ? (payload["history"] as ConversationMessage[])
+        : [];
+
       if (!company || !position) {
         return NextResponse.json(
           { error: "Şirket adı ve pozisyon boş bırakılamaz." },
@@ -163,17 +182,19 @@ export async function POST(request: Request) {
       }
 
       const userText =
-     `Şirket: "${company}"\nPozisyon: "${position}"\nZorluk: "${difficulty}"\nKategori: "${category}"\n\n` +
-  `Bu şirkete gerçek bir mülakatda sorulabilecek, ` +
-  `zorluk seviyesi "${difficulty}" ve kategorisi "${category}" olan TEK bir soru üret.\n` +
-  `Teknik: kod, sistem, algoritma soruları.\n` +
-  `Davranışsal: geçmiş deneyim ve yetkinlik soruları.\n` +
-  `Stres: baskı altında karar verme soruları.\n` +
-  `Soru özgün, şirkete özel ve gerçekçi olsun.\n\n` +
-  'Yanıtı yalnızca şu JSON nesnesi olarak ver: {"question":"..."}';
+        `Şirket: "${company}"\nPozisyon: "${position}"\nZorluk: "${difficulty}"\nKategori: "${category}"\n\n` +
+        `Bu şirkete gerçek bir mülakatda sorulabilecek, ` +
+        `zorluk seviyesi "${difficulty}" ve kategorisi "${category}" olan TEK bir soru üret.\n` +
+        `Daha önce sorulmuş sorulardan FARKLI bir soru seç.\n` +
+        `Teknik: kod, sistem, algoritma soruları.\n` +
+        `Davranışsal: geçmiş deneyim ve yetkinlik soruları.\n` +
+        `Stres: baskı altında karar verme soruları.\n` +
+        `Soru özgün, şirkete özel ve gerçekçi olsun.\n\n` +
+        'Yanıtı yalnızca şu JSON nesnesi olarak ver: {"question":"..."}';
+
       let raw: string;
       try {
-        raw = await generateJsonText(genAI, userText, 0.7);
+        raw = await generateJsonText(genAI, userText, 0.7, history);
       } catch (e) {
         if (e instanceof Error && e.message === "empty_response") {
           return NextResponse.json({ error: "Model boş yanıt döndü." }, { status: 502 });
@@ -189,7 +210,10 @@ export async function POST(request: Request) {
       }
 
       if (!isQuestionPayload(parsed)) {
-        return NextResponse.json({ error: "Model yanıtı beklenen formatta değil." }, { status: 502 });
+        return NextResponse.json(
+          { error: "Model yanıtı beklenen formatta değil." },
+          { status: 502 },
+        );
       }
 
       return NextResponse.json({ question: parsed.question.trim() });
@@ -214,7 +238,7 @@ export async function POST(request: Request) {
         `Adayın cevabı:\n${answer}\n\n` +
         "Cevabı değerlendir. Güçlü yönler ve eksik noktalar maddeler halinde olsun. " +
         "İdeal cevap kısa ama örnek teşkil edecek şekilde yazılsın. " +
-        "score 0 ile 100 arasında tam sayı veya ondalıklı bir sayı olabilir (0-100 aralığında kalsın).\n\n" +
+        "score 0 ile 100 arasında tam sayı olsun.\n\n" +
         "Yanıtı yalnızca şu JSON yapısında ver:\n" +
         '{"feedback":{"strengths":["..."],"weaknesses":["..."],"ideal_answer":"...","score":0}}';
 
@@ -236,13 +260,45 @@ export async function POST(request: Request) {
       }
 
       if (!isFeedbackPayload(parsed)) {
-        return NextResponse.json({ error: "Model yanıtı beklenen formatta değil." }, { status: 502 });
+        return NextResponse.json(
+          { error: "Model yanıtı beklenen formatta değil." },
+          { status: 502 },
+        );
       }
 
-      return NextResponse.json({
-        feedback: parsed.feedback,
-      });
+      return NextResponse.json({ feedback: parsed.feedback });
     }
+
+    if (action === "analyze-cv") {
+      const cv = readTrimmedString(payload, "cv");
+      if (!cv) {
+        return NextResponse.json(
+          { error: "CV metni boş bırakılamaz." },
+          { status: 400 },
+        );
+      }
+
+      const userText =
+        `Aşağıdaki CV'yi Türk iş piyasası standartlarına göre analiz et:\n\n${cv}\n\n` +
+        "Yanıtı yalnızca şu JSON yapısında ver:\n" +
+        '{"strengths":["..."],"weaknesses":["..."],"missing":["..."],"score":0,"summary":"..."}';
+
+      const raw = await generateJsonText(genAI, userText, 0.4);
+      const parsed = parseJsonFromAssistant(raw);
+      return NextResponse.json({ result: parsed });
+    }
+
+    
+      if (action === "parse-pdf") {
+        const base64 = readTrimmedString(payload, "base64");
+        if (!base64) {
+          return NextResponse.json({ error: "PDF verisi boş." }, { status: 400 });
+        }
+        const { extractText } = await import("unpdf");
+        const buffer = Buffer.from(base64, "base64");
+        const { text } = await extractText(new Uint8Array(buffer));
+        return NextResponse.json({ text });
+      }
 
     return NextResponse.json({ error: "Geçersiz işlem." }, { status: 400 });
   } catch (err) {
