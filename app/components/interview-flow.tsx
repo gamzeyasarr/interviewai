@@ -65,6 +65,7 @@ export function InterviewFlow() {
         company: c,
         position: p,
         difficulty: difficulty,
+        category: category,
       });
       const data = (await res.json()) as { question?: string; error?: string };
       if (!res.ok) {
