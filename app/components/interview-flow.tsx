@@ -48,7 +48,7 @@ interface SpeechRecognitionInstance extends EventTarget {
   start(): void;
   stop(): void;
   onresult: ((e: SpeechRecognitionEvent) => void) | null;
-  onerror: ((e: Event) => void) | null;
+  onerror: ((e: Event & { error?: string; message?: string }) => void) | null;
   onend: (() => void) | null;
 }
 
@@ -98,7 +98,6 @@ function stopSpeaking(): void {
   }
 }
 
-// Her zaman güvenli string döndürür
 function safeString(val: unknown): string {
   if (typeof val === "string") return val;
   if (val === null || val === undefined) return "";
@@ -163,6 +162,7 @@ function ScoreRing({ score, size = 96 }: { score: number; size?: number }) {
         strokeLinecap="round"
         style={{ transition: "stroke-dasharray 0.8s ease" }}
       />
+      {/* ✅ DÜZELTME 4: hardcoded renk yerine currentColor kullan */}
       <text
         x="50%"
         y="50%"
@@ -172,7 +172,7 @@ function ScoreRing({ score, size = 96 }: { score: number; size?: number }) {
           transform: `rotate(90deg) translate(0px, -${size}px)`,
           fontSize: size * 0.22,
           fontWeight: 700,
-          fill: "#0f172a",
+          fill: "currentColor",
         }}
       >
         {Math.round(score)}
@@ -223,6 +223,18 @@ export function InterviewFlow() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
+  // ✅ DÜZELTME 5: Modal açıkken body scroll'u engelle
+  useEffect(() => {
+    if (showReport) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [showReport]);
+
   const reset = useCallback(() => {
     stopListening();
     stopSpeaking();
@@ -250,27 +262,43 @@ export function InterviewFlow() {
 
   // ── Speech recognition ──────────────────────────────────────────────────────
 
-  function stopListening() {
+  // ✅ DÜZELTME 6: useCallback ile sarıldı — dependency array uyarıları önlenir
+  const stopListening = useCallback(() => {
     if (recognitionRef.current) {
       recognitionRef.current.stop();
       recognitionRef.current = null;
     }
     setIsListening(false);
-  }
+  }, []);
 
   function toggleListening() {
     if (isListening) { stopListening(); return; }
     const rec = getSpeechRecognition();
-    if (!rec) return;
+    if (!rec) {
+      setError("Bu tarayıcı sesli yazmayı desteklemiyor. Chrome/Edge deneyin.");
+      return;
+    }
     recognitionRef.current = rec;
     rec.onresult = (e: SpeechRecognitionEvent) => {
       const transcript = Array.from(e.results).map((r) => r[0].transcript).join(" ");
       setUserAnswer((prev) => (prev ? prev + " " + transcript : transcript));
     };
-    rec.onerror = () => stopListening();
+    rec.onerror = (e) => {
+      const err = typeof e?.error === "string" ? e.error : "";
+      if (err === "not-allowed") setError("Mikrofon izni reddedildi. Tarayıcı izinlerini kontrol edin.");
+      else if (err === "service-not-allowed") setError("Tarayıcı ses tanıma servisini engelledi.");
+      else if (err === "no-speech") setError("Ses algılanmadı. Tekrar deneyin.");
+      else if (err) setError(`Sesli yazma hatası: ${err}`);
+      stopListening();
+    };
     rec.onend = () => { recognitionRef.current = null; setIsListening(false); };
-    rec.start();
-    setIsListening(true);
+    try {
+      rec.start();
+      setIsListening(true);
+    } catch {
+      setError("Sesli yazma başlatılamadı. Sayfayı yenileyip tekrar deneyin.");
+      stopListening();
+    }
   }
 
   // ── Text-to-speech ──────────────────────────────────────────────────────────
@@ -288,9 +316,8 @@ export function InterviewFlow() {
 
   // ── CV file upload ──────────────────────────────────────────────────────────
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // ✅ DÜZELTME 7: Tekrar eden dosya işleme mantığı tek fonksiyona çıkarıldı
+  const processFile = useCallback(async (file: File) => {
     setError(null);
     setCvFileLoading(true);
     try {
@@ -303,23 +330,17 @@ export function InterviewFlow() {
       setCvFileLoading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
+  }, []);
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) await processFile(file);
   }
 
   async function handleFileDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
-    if (!file) return;
-    setError(null);
-    setCvFileLoading(true);
-    try {
-      const text = await extractTextFromFile(file);
-      setCvText(safeString(text));
-      setCvFileName(file.name);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Dosya okunamadı.");
-    } finally {
-      setCvFileLoading(false);
-    }
+    if (file) await processFile(file);
   }
 
   // ── API calls ───────────────────────────────────────────────────────────────
