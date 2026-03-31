@@ -1,85 +1,55 @@
-# InterviewAI
+# 🧪 InterviewAI: Mülakat Simülatörü
 
-Hedef şirket ve pozisyona özel yapay zeka destekli mülakat simülasyonu (Next.js, App Router, Tailwind).
+**InterviewAI**, hedef şirket ve pozisyona özel, yapay zeka destekli profesyonel bir mülakat simülasyon uygulamasıdır. Özellikle kimya sektörü ve teknik mülakat süreçleri için optimize edilmiştir.
 
-## Gereksinimler
+🚀 **Canlı Demo:** [interviewai-gamze.vercel.app](https://interviewai-gamze.vercel.app)
 
-- Node.js 20+
-- npm veya uyumlu paket yöneticisi
-- [Google AI Studio](https://aistudio.google.com/apikey) Gemini API anahtarı
+---
 
-## Kurulum
+## ✨ Özellikler
+* **Gerçekçi Simülasyon:** Hedeflenen pozisyona uygun teknik ve yetkinlik bazlı sorular.
+* **Anlık Geri Bildirim:** AI destekli cevap analizi ve iyileştirme önerileri.
+* **Modern Arayüz:** Next.js App Router ve Tailwind CSS ile hızlı, duyarlı tasarım.
+* **Yüksek Hız:** Groq Cloud üzerinden LPU™ teknolojisi
 
-Önce Node sürümünü kontrol edin (20.9 veya üzeri önerilir):
+## 🛠️ Kullanılan Teknolojiler
+* **Framework:** Next.js 16 (App Router)
+* **Styling:** Tailwind CSS
+* **AI Engine:** Groq Cloud API (Llama / Mixtral modelleri)
+* **Deployment:** Vercel
+* **IDE:** Cursor
 
-```bash
-node -v
-```
+## ⚙️ Gereksinimler & Kurulum
 
-```bash
+### 1. Ön Hazırlık
+* **Node.js:** v20.9 veya üzeri (`node -v` ile kontrol edebilirsiniz).
+* **API Key:** [Groq Console](https://console.groq.com/) üzerinden alınmış bir API anahtarı.
+
+### 2. Yükleme
+Bash
 npm install
-```
 
-Kurulum tamamlanana kadar TypeScript bazı paketleri göremeyebilir; repo kökünde `types/modules-shim.d.ts` geçici tip bildirimleri içerir. **`npm install` mutlaka `interviewai` klasöründe çalıştırılmalıdır** (üst klasör `Gamze` açıksa `node_modules` oluşmaz).
+### 3. Ortam Değişkenleri
+Kök dizinde .env.local dosyası oluşturun ve anahtarınızı ekleyin:
 
-**Windows:** Cursor/IDE terminali `npm`i bozuyorsa Dosya Gezgini’nden proje klasöründe `install.bat` dosyasına çift tıklayın veya **cmd.exe** açıp `install.bat` çalıştırın.
+### Kod snippet'i
+GROQ_API_KEY=your_groq_api_key_here
 
-### `npm install` hata verirse
-
-1. **Peer dependency / ERESOLVE**  
-   Proje kökünde `.npmrc` dosyası `legacy-peer-deps=true` içerir; yine de hata alırsanız:
-   ```bash
-   npm install --legacy-peer-deps
-   ```
-
-2. **Eski veya bozuk önbellek**  
-   ```bash
-   rd /s /q node_modules
-   del package-lock.json
-   npm cache clean --force
-   npm install
-   ```
-
-3. **`sharp` / `node-gyp` / derleme hatası (Windows)**  
-   Bu projede `next/image` kullanılmıyor; yine de Next isteğe bağlı `sharp` indirebilir. Kurulum `sharp` yüzünden kırılıyorsa:
-   ```bash
-   npm install --no-optional
-   ```
-   Ardından `npm run dev` ile deneyin.
-
-4. **Terminal**  
-   Bazı ortamlarda `pwsh`/PowerShell profili `npm`i bozabilir. **cmd.exe** veya **Windows Terminal + varsayılan PowerShell** ile aynı komutları deneyin.
-
-5. **`package.json` okunamıyor**  
-   Dosyanın UTF-8 (BOM’suz) kaydedildiğinden ve geçerli JSON olduğundan emin olun.
-
-Kök dizinde `.env.local` oluşturun (`.env.example` dosyasına bakın):
-
-```bash
-copy .env.example .env.local
-```
-
-`GOOGLE_GENERATIVE_AI_API_KEY` değerini doldurun.
-
-## Geliştirme
-
-```bash
+###  4. Geliştirme Modunda Çalıştırma
+Bash
 npm run dev
-```
+Ardından tarayıcıda http://localhost:3000 adresini açın.
 
-Tarayıcıda [http://localhost:3000](http://localhost:3000) adresini açın.
+### 🚀 Dağıtım (Deployment)
+Proje Vercel üzerinde yayındadır. Kendi Vercel hesabınızda dağıtım yapmak isterseniz:
 
-## Diğer komutlar
+GitHub deponuzu Vercel'e bağlayın.
 
-| Komut | Açıklama |
-| --- | --- |
-| `npm run build` | Üretim derlemesi |
-| `npm run start` | Üretim sunucusu |
-| `npm run lint` | ESLint |
-| `npm run format` | Prettier |
+Environment Variables kısmına GROQ_API_KEY değişkenini ekleyin.
 
-## Dağıtım
+npm run build komutu ile yayına alın.
 
-[Vercel](https://vercel.com) üzerinde projeyi bağlayıp `GOOGLE_GENERATIVE_AI_API_KEY` ortam değişkenini production için tanımlayın.
+### 📄 Dokümantasyon & Geliştirici
 
-Ürün gereksinimleri: `docs/prd.md`. Görev listesi: `tasks.md`.
+Ürün Gereksinimleri: docs/prd.md
+Görev Listesi: tasks.md
