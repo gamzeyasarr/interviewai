@@ -1,6 +1,6 @@
 # 🧬 InterviewAI: Yapay Zeka Destekli Mülakat Simülatörü
 
-**InterviewAI**, hedef şirket ve pozisyona özel, yapay zeka destekli bir mülakat simülasyon uygulamasıdır. 
+**InterviewAI**, teknik disiplinlerdeki adayların iş bulmak için gereken tecrübeyi mülakat aşamasında kaybetmelerine neden olan 'tecrübe paradoksunu' yapay zeka ile kırıyor. Platformumuz, adayların performans kaygısını gerçekçi simülasyonlarla ortadan kaldırarak teknik bilgilerini özgüvenli bir sunuma dönüştürmelerini sağlıyor. Bu sayede fırsat eşitliği yaratarak, her adayın hedefindeki şirkete en hazır haliyle ulaşmasını mümkün kılıyor.
 
 ## 📺 Proje Tanıtımı & Demo
 Uygulamanın nasıl çalıştığını ve teknik detaylarını anlattığım demo videosuna aşağıdan ulaşabilirsiniz:
