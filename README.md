@@ -1,11 +1,20 @@
-# 🧪 InterviewAI: Mülakat Simülatörü
+# 🧬 InterviewAI: Yapay Zeka Destekli Mülakat Simülatörü
 
-**InterviewAI**, hedef şirket ve pozisyona özel, yapay zeka destekli profesyonel bir mülakat simülasyon uygulamasıdır. Özellikle kimya sektörü ve teknik mülakat süreçleri için optimize edilmiştir.
+**InterviewAI**, hedef şirket ve pozisyona özel, yapay zeka destekli bir mülakat simülasyon uygulamasıdır. 
 
-🚀 **Canlı Demo:** [interviewai-gamze.vercel.app](https://interviewai-gamze.vercel.app)
+## 📺 Proje Tanıtımı & Demo
+Uygulamanın nasıl çalıştığını ve teknik detaylarını anlattığım demo videosuna aşağıdan ulaşabilirsiniz:
 
----
+🎥 **Demo Videosu:** [Loom Üzerinden İzle](https://www.loom.com/share/22958d057e204fa58d7f44a923e1cf82)
 
+🚀 **Canlı Dağıtım (Production):** [interviewai-gamze.vercel.app](https://interviewai-gamze.vercel.app)
+
+## 📋 Platform Yetenekleri
+* 🏢 **Kurumsal Odak:** Şirket ve pozisyona özel simülasyon kurgusu.
+* ⚖️ **Zorluk Seviyesi:** 🟢 Kolay | 🟡 Orta | 🔴 Zor
+* 🧬 **Soru Kategorileri:** 💻 Teknik  | 🤝 Davranışsal | 🔥 Stres Yönetimi
+* 🧠 **Akıllı Analiz:** 📄 CV analizi
+  
 ## ✨ Özellikler
 * **Gerçekçi Simülasyon:** Hedeflenen pozisyona uygun teknik ve yetkinlik bazlı sorular.
 * **Anlık Geri Bildirim:** AI destekli cevap analizi ve iyileştirme önerileri.
@@ -32,7 +41,7 @@ npm install
 ### 3. Ortam Değişkenleri
 Kök dizinde .env.local dosyası oluşturun ve anahtarınızı ekleyin:
 
-### Kod snippet'i
+#### Kod snippet'i
 GROQ_API_KEY=your_groq_api_key_here
 
 ###  4. Geliştirme Modunda Çalıştırma
@@ -40,7 +49,7 @@ Bash
 npm run dev
 Ardından tarayıcıda http://localhost:3000 adresini açın.
 
-### 🚀 Dağıtım (Deployment)
+## 🚀 Dağıtım (Deployment)
 Proje Vercel üzerinde yayındadır. Kendi Vercel hesabınızda dağıtım yapmak isterseniz:
 
 GitHub deponuzu Vercel'e bağlayın.
@@ -49,7 +58,7 @@ Environment Variables kısmına GROQ_API_KEY değişkenini ekleyin.
 
 npm run build komutu ile yayına alın.
 
-### 📄 Dokümantasyon & Geliştirici
+##  📄 Dokümantasyon & Geliştirici
 
-Ürün Gereksinimleri: docs/prd.md
-Görev Listesi: tasks.md
+* **Ürün Gereksinimleri:** docs/prd.md
+* **Görev Listesi:** tasks.md
